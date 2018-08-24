@@ -9,6 +9,7 @@ import br.com.datamob.controledeuniversidade.database_room.dao.CidadeDao;
 import br.com.datamob.controledeuniversidade.database_room.dao.UniversidadeDao;
 import br.com.datamob.controledeuniversidade.database_room.entity.CidadeEntity;
 import br.com.datamob.controledeuniversidade.database_room.entity.UniversidadeEntity;
+import br.com.datamob.controledeuniversidade.database_room.view_dao.UniversidadeCidadeDao;
 
 @Database(entities = {CidadeEntity.class, UniversidadeEntity.class}, version = 1)
 public abstract class DatabaseRoom extends RoomDatabase
@@ -16,7 +17,8 @@ public abstract class DatabaseRoom extends RoomDatabase
     private static final String DATABASE_NAME = "bancoDeDados";
 
     public abstract CidadeDao cidadeDao();
-    public abstract UniversidadeDao universidadeDaoDao();
+    public abstract UniversidadeDao universidadeDao();
+    public abstract UniversidadeCidadeDao universidadeCidadeDao();
 
     private static DatabaseRoom instance;
 

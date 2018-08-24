@@ -14,13 +14,13 @@ import br.com.datamob.controledeuniversidade.database_room.entity.UniversidadeEn
 public interface UniversidadeDao
 {
     @Insert
-    public boolean insert(UniversidadeEntity... entities);
+    public long[] insert(UniversidadeEntity... entities);
 
     @Query("select * from universidade order by upper(nome), upper(cidade)")
     public List<UniversidadeEntity> selectAll();
 
     @Query("select * from universidade where codigo = :codigo")
-    public UniversidadeEntity selectByCodigo(Integer codigo);
+    public UniversidadeEntity selectByCodigo(Long codigo);
 
     @Delete
     public int delete(UniversidadeEntity... entities);

@@ -12,7 +12,7 @@ import br.com.datamob.controledeuniversidade.database_room.entity.CidadeEntity;
 public interface CidadeDao
 {
     @Insert
-    public int[] insert(CidadeEntity... entities);
+    public long[] insert(CidadeEntity... entities);
 
     @Query("select * from cidade order by upper(nome), upper(estado)")
     public List<CidadeEntity> selectAll();

@@ -1,7 +1,10 @@
 package br.com.datamob.controledeuniversidade;
 
+import android.content.Context;
 import android.database.sqlite.SQLiteConstraintException;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
@@ -13,12 +16,15 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import br.com.datamob.controledeuniversidade.database.dao.CidadeDao;
-import br.com.datamob.controledeuniversidade.database.entity.CidadeEntity;
+import br.com.datamob.controledeuniversidade.database_room.DatabaseRoom;
+import br.com.datamob.controledeuniversidade.database_room.entity.CidadeEntity;
 import br.com.datamob.controledeuniversidade.dialogs.PopupInformacao;
 
 public class CadastroDeCidade extends AppCompatActivity
 {
+    private Handler handler = new Handler();
+    private Context context = CadastroDeCidade.this;
+    //
     private TextView tvCodigo;
     private TextInputLayout tilNome;
     private TextInputEditText etNome;
@@ -72,7 +78,24 @@ public class CadastroDeCidade extends AppCompatActivity
             }
         });
         //
-        tvCodigo.setText(new CidadeDao(this).getProximoCodigo().toString());
+        AsyncTask.execute(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final Long codigo = DatabaseRoom.getInstance(getApplicationContext()).cidadeDao().getProximoCodigo();
+                handler.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        tvCodigo.setText(codigo.toString());
+                    }
+                });
+            }
+        });
+
+
     }
 
     private void carregaEstados()
@@ -92,19 +115,26 @@ public class CadastroDeCidade extends AppCompatActivity
 
     private void salvaRegistroFechaTela()
     {
-        CidadeEntity entity = new CidadeEntity();
-        preencheValores(entity);
-        try
+        AsyncTask.execute(new Runnable()
         {
-            if (new CidadeDao(this).insert(entity))
-                fechaTelaSucesso();
-            else
-                PopupInformacao.mostraMensagem(this, "Erro ao inserir");
-        }
-        catch (SQLiteConstraintException ex)
-        {
-            PopupInformacao.mostraMensagem(this, "Código já existe");
-        }
+            @Override
+            public void run()
+            {
+                CidadeEntity entity = new CidadeEntity();
+                preencheValores(entity);
+                try
+                {
+                    if (DatabaseRoom.getInstance(getApplicationContext()).cidadeDao().insert(entity) != null)
+                        fechaTelaSucesso();
+                    else
+                        PopupInformacao.mostraMensagem(context, handler, "Erro ao inserir");
+                }
+                catch (SQLiteConstraintException ex)
+                {
+                    PopupInformacao.mostraMensagem(context, handler, "Código já existe");
+                }
+            }
+        });
     }
 
     private void preencheValores(CidadeEntity entity)
@@ -135,6 +165,13 @@ public class CadastroDeCidade extends AppCompatActivity
 
     private void fechaTelaSucesso()
     {
-        finish();
+        handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                finish();
+            }
+        });
     }
 }

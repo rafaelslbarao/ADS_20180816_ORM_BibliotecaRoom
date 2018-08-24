@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import br.com.datamob.controledeuniversidade.database.view_entity.UniversidadeCidadeEntity;
+import br.com.datamob.controledeuniversidade.database_room.view_entity.UniversidadeCidadeEntity;
 
 public class ListaDeUniversidadesAdapter extends ArrayAdapter<UniversidadeCidadeEntity>
 {

@@ -2,7 +2,9 @@ package br.com.datamob.controledeuniversidade;
 
 import android.content.Intent;
 import android.database.sqlite.SQLiteConstraintException;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TextInputEditText;
@@ -17,14 +19,16 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import br.com.datamob.controledeuniversidade.database.dao.CidadeDao;
-import br.com.datamob.controledeuniversidade.database.dao.UniversidadeDao;
-import br.com.datamob.controledeuniversidade.database.entity.CidadeEntity;
-import br.com.datamob.controledeuniversidade.database.entity.UniversidadeEntity;
+import br.com.datamob.controledeuniversidade.database_room.DatabaseRoom;
+import br.com.datamob.controledeuniversidade.database_room.dao.UniversidadeDao;
+import br.com.datamob.controledeuniversidade.database_room.entity.CidadeEntity;
+import br.com.datamob.controledeuniversidade.database_room.entity.UniversidadeEntity;
 import br.com.datamob.controledeuniversidade.dialogs.PopupInformacao;
 
 public class CadastroDeUniversidade extends AppCompatActivity
 {
+    public Handler handler = new Handler();
+    //
     public static final String EXTRA_CODIGO = "br.com.datamob.controledeuniversidade.codigo";
     private static final int CADASTRO_CIDADE = 1;
     //
@@ -42,12 +46,25 @@ public class CadastroDeUniversidade extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cadastro_de_universidade);
-        Long codigo = getIntent().getLongExtra(EXTRA_CODIGO, -1);
-        universidadeEntity = new UniversidadeDao(this).selectByCodigo(codigo.toString());
-        ininicializaComponentes();
-        carregaCidades();
-        if (universidadeEntity != null)
-            carregaValores();
+        //
+        AsyncTask.execute(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Long codigo = getIntent().getLongExtra(EXTRA_CODIGO, -1);
+                universidadeEntity = DatabaseRoom.getInstance(getApplicationContext()).universidadeDao().selectByCodigo(codigo);
+                handler.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        ininicializaComponentes();
+                        carregaCidades();
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -125,16 +142,55 @@ public class CadastroDeUniversidade extends AppCompatActivity
             });
         }
         //
-        tvCodigo.setText(new UniversidadeDao(this).getProximoCodigo().toString());
+
     }
 
     private void carregaCidades()
     {
-        List<CidadeEntity> cidadeEntities = new CidadeDao(this).selectAll();
-        cidadeEntities.add(0, new CidadeEntity(0l, "Cidade", "Estado"));
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, cidadeEntities);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spCidade.setAdapter(adapter);
+        AsyncTask.execute(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final List<CidadeEntity> cidadeEntities = DatabaseRoom.getInstance(getApplicationContext()).cidadeDao().selectAll();
+                cidadeEntities.add(0, new CidadeEntity(0l, "Cidade", "Estado"));
+                spCidade.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        ArrayAdapter adapter = new ArrayAdapter(CadastroDeUniversidade.this, android.R.layout.simple_spinner_item, cidadeEntities);
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        spCidade.setAdapter(adapter);
+                        //
+                        if (universidadeEntity != null)
+                            carregaValores();
+                        else
+                        {
+                            AsyncTask.execute(new Runnable()
+                            {
+                                @Override
+                                public void run()
+                                {
+                                    final Long proximoCodigo = DatabaseRoom.getInstance(getApplicationContext()).universidadeDao().getProximoCodigo();
+                                    tvCodigo.post(new Runnable()
+                                    {
+                                        @Override
+                                        public void run()
+                                        {
+                                            tvCodigo.setText(proximoCodigo.toString());
+                                        }
+                                    });
+                                }
+                            });
+
+                        }
+                    }
+                });
+            }
+        });
+
+
     }
 
     private void confirmaTela()
@@ -166,38 +222,54 @@ public class CadastroDeUniversidade extends AppCompatActivity
 
     private void salvaRegistroFechaTela()
     {
-        if (universidadeEntity == null)
+        AsyncTask.execute(new Runnable()
         {
-            UniversidadeEntity universidadeEntity = new UniversidadeEntity();
-            preencheValores(universidadeEntity);
-            try
+            @Override
+            public void run()
             {
-                if (new UniversidadeDao(this).insert(universidadeEntity))
-                    fechaTelaSucesso();
+                UniversidadeDao universidadeDao = DatabaseRoom.getInstance(getApplicationContext()).universidadeDao();
+                if (universidadeEntity == null)
+                {
+                    UniversidadeEntity universidadeEntity = new UniversidadeEntity();
+                    preencheValores(universidadeEntity);
+                    try
+                    {
+                        if (universidadeDao.insert(universidadeEntity) != null)
+                            fechaTelaSucesso();
+                        else
+                            PopupInformacao.mostraMensagem(CadastroDeUniversidade.this, handler, "Erro ao inserir");
+                    }
+                    catch (SQLiteConstraintException ex)
+                    {
+                        PopupInformacao.mostraMensagem(CadastroDeUniversidade.this, handler, "Código já existe");
+                    }
+                }
                 else
-                    PopupInformacao.mostraMensagem(this, "Erro ao inserir");
+                {
+                    preencheValores(universidadeEntity);
+                    if (universidadeDao.update(universidadeEntity) > 0)
+                        fechaTelaSucesso();
+                    else
+                        PopupInformacao.mostraMensagem(CadastroDeUniversidade.this, handler, "Erro ao inserir");
+                }
             }
-            catch (SQLiteConstraintException ex)
-            {
-                PopupInformacao.mostraMensagem(this, "Código já existe");
-            }
-        }
-        else
-        {
-            preencheValores(universidadeEntity);
-            if (new UniversidadeDao(this).update(universidadeEntity) > 0)
-                fechaTelaSucesso();
-            else
-                PopupInformacao.mostraMensagem(this, "Erro ao inserir");
-        }
+        });
     }
 
     private void deleteRegistroFechaTela()
     {
-        if (new UniversidadeDao(this).delete(universidadeEntity.getCodigo().toString()) > 0)
-            fechaTelaSucesso();
-        else
-            PopupInformacao.mostraMensagem(this, "Erro ao remover");
+        AsyncTask.execute(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                if (DatabaseRoom.getInstance(getApplicationContext()).universidadeDao().delete(universidadeEntity) > 0)
+                    fechaTelaSucesso();
+                else
+                    PopupInformacao.mostraMensagem(CadastroDeUniversidade.this, handler, "Erro ao remover");
+            }
+        });
+
     }
 
     private void preencheValores(UniversidadeEntity universidadeEntity)
@@ -209,7 +281,15 @@ public class CadastroDeUniversidade extends AppCompatActivity
 
     private void fechaTelaSucesso()
     {
-        finish();
+        handler.post(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                finish();
+            }
+        });
+
     }
 
     private void carregaValores()

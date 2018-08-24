@@ -1,6 +1,7 @@
 package br.com.datamob.controledeuniversidade;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -8,8 +9,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import br.com.datamob.controledeuniversidade.database.view_dao.UniversidadeCidadeDao;
-import br.com.datamob.controledeuniversidade.database.view_entity.UniversidadeCidadeEntity;
+import java.util.List;
+
+import br.com.datamob.controledeuniversidade.database_room.DatabaseRoom;
+import br.com.datamob.controledeuniversidade.database_room.view_entity.UniversidadeCidadeEntity;
 
 public class ListaDeUniversidades extends AppCompatActivity
 {
@@ -60,6 +63,24 @@ public class ListaDeUniversidades extends AppCompatActivity
 
     private void carregaLista()
     {
-        lvInformacoes.setAdapter(new ListaDeUniversidadesAdapter(this, new UniversidadeCidadeDao(this).selectAll()));
+        AsyncTask.execute(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                final List<UniversidadeCidadeEntity> universidadeCidadeEntities = DatabaseRoom.getInstance(getApplicationContext()).universidadeCidadeDao().selectAll();
+                lvInformacoes.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        lvInformacoes.setAdapter(new ListaDeUniversidadesAdapter(ListaDeUniversidades.this, universidadeCidadeEntities));
+                    }
+                });
+            }
+        });
+
+
+
     }
 }
