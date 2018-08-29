@@ -5,6 +5,8 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
 
+import java.util.Date;
+
 // Definição de chave primária composta
 //@Entity(tableName = "cidade", primaryKeys = {"codigo", "outracoluna"})
 @Entity(tableName = "cidade")
@@ -18,6 +20,9 @@ public class CidadeEntity
 
     @ColumnInfo
     private String estado;
+
+    @ColumnInfo(typeAffinity = ColumnInfo.TEXT)
+    private Date data;
 
     @Ignore
     private String colunaAuxiliar;
@@ -61,6 +66,16 @@ public class CidadeEntity
     public void setEstado(String estado)
     {
         this.estado = estado;
+    }
+
+    public Date getData()
+    {
+        return data;
+    }
+
+    public void setData(Date data)
+    {
+        this.data = data;
     }
 
     @Override

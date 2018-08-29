@@ -3,6 +3,7 @@ package br.com.datamob.controledeuniversidade.database_room;
 import android.arch.persistence.room.Database;
 import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
+import android.arch.persistence.room.TypeConverters;
 import android.content.Context;
 
 import br.com.datamob.controledeuniversidade.database_room.dao.CidadeDao;
@@ -12,6 +13,7 @@ import br.com.datamob.controledeuniversidade.database_room.entity.UniversidadeEn
 import br.com.datamob.controledeuniversidade.database_room.view_dao.UniversidadeCidadeDao;
 
 @Database(entities = {CidadeEntity.class, UniversidadeEntity.class}, version = 1)
+@TypeConverters({DateTypeConverter.class})
 public abstract class DatabaseRoom extends RoomDatabase
 {
     private static final String DATABASE_NAME = "bancoDeDados";
