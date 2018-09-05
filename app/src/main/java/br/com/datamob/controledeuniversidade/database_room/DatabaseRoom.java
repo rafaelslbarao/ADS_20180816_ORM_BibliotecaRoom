@@ -13,7 +13,6 @@ import br.com.datamob.controledeuniversidade.database_room.entity.UniversidadeEn
 import br.com.datamob.controledeuniversidade.database_room.view_dao.UniversidadeCidadeDao;
 
 @Database(entities = {CidadeEntity.class, UniversidadeEntity.class}, version = 1)
-@TypeConverters({DateTypeConverter.class})
 public abstract class DatabaseRoom extends RoomDatabase
 {
     private static final String DATABASE_NAME = "bancoDeDados";
